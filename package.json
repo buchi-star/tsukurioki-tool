@@ -1,0 +1,14 @@
+{
+  "name": "tsukurioki-tool",
+  "version": "1.0.0",
+  "description": "家にある食材から作り置き献立を提案するツール",
+  "main": "test.js",
+  "type": "module",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
+    "dotenv": "^17.4.2"
+  }
+}
