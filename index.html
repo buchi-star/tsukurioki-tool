@@ -221,6 +221,89 @@
       color: #444;
     }
 
+    /* 制約条件セクション */
+    .constraints-section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .constraints-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #2d2d2d;
+      margin-bottom: 16px;
+    }
+
+    .constraint-group {
+      margin-bottom: 16px;
+    }
+
+    .constraint-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .constraint-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #5a8a6a;
+      margin-bottom: 8px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.88rem;
+      color: #444;
+      cursor: pointer;
+      background: #f5f5f0;
+      border: 1px solid #e0e0d8;
+      border-radius: 20px;
+      padding: 5px 12px;
+      user-select: none;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      accent-color: #5a8a6a;
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+    }
+
+    .checkbox-item:has(input:checked) {
+      background: #eaf2ee;
+      border-color: #5a8a6a;
+      color: #3a6a4a;
+    }
+
+    .constraint-textarea {
+      width: 100%;
+      height: 72px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      resize: vertical;
+      line-height: 1.6;
+      color: #444;
+    }
+
+    .constraint-textarea:focus {
+      outline: none;
+      border-color: #5a8a6a;
+    }
+
     .hidden {
       display: none;
     }
@@ -239,6 +322,38 @@
       <button id="submit-btn">献立を提案する</button>
     </div>
 
+    <div class="constraints-section">
+      <div class="constraints-title">調理条件（任意）</div>
+
+      <div class="constraint-group">
+        <div class="constraint-label">使える調理器具</div>
+        <div class="checkbox-row">
+          <label class="checkbox-item"><input type="checkbox" name="equipment" value="コンロ" checked> コンロ</label>
+          <label class="checkbox-item"><input type="checkbox" name="equipment" value="魚焼きグリル" checked> 魚焼きグリル</label>
+          <label class="checkbox-item"><input type="checkbox" name="equipment" value="電気圧力鍋" checked> 電気圧力鍋</label>
+          <label class="checkbox-item"><input type="checkbox" name="equipment" value="オーブン"> オーブン</label>
+          <label class="checkbox-item"><input type="checkbox" name="equipment" value="トースター"> トースター</label>
+        </div>
+      </div>
+
+      <div class="constraint-group">
+        <div class="constraint-label">除外したい調理法</div>
+        <div class="checkbox-row">
+          <label class="checkbox-item"><input type="checkbox" name="exclude" value="揚げ物" checked> 揚げ物</label>
+          <label class="checkbox-item"><input type="checkbox" name="exclude" value="電子レンジ" checked> 電子レンジ</label>
+        </div>
+      </div>
+
+      <div class="constraint-group">
+        <div class="constraint-label">食の好みや制約（自由記述）</div>
+        <textarea
+          id="dietary-notes"
+          class="constraint-textarea"
+          placeholder="例：高たんぱくにしてほしい、辛いものは苦手、糖質控えめにしたい…"
+        ></textarea>
+      </div>
+    </div>
+
     <div id="loading" class="loading hidden">
       <div class="spinner"></div>
       <div>献立を考えています…</div>
@@ -253,12 +368,23 @@
     const resultsEl = document.getElementById('results');
     const ingredientsEl = document.getElementById('ingredients');
 
+    // チェックボックスの選択値を配列で返すヘルパー関数
+    function getCheckedValues(name) {
+      return [...document.querySelectorAll(`input[name="${name}"]:checked`)]
+        .map(el => el.value);
+    }
+
     submitBtn.addEventListener('click', async () => {
       const ingredients = ingredientsEl.value.trim();
       if (!ingredients) {
         alert('食材を入力してください');
         return;
       }
+
+      // ユーザーが選択した制約条件を収集する
+      const cookingEquipment = getCheckedValues('equipment');
+      const excludedMethods  = getCheckedValues('exclude');
+      const dietaryNotes     = document.getElementById('dietary-notes').value;
 
       // ローディング開始
       submitBtn.disabled = true;
@@ -269,7 +395,7 @@
         const res = await fetch('/api/suggest', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ingredients }),
+          body: JSON.stringify({ ingredients, cookingEquipment, excludedMethods, dietaryNotes }),
         });
 
         const data = await res.json();
