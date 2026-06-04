@@ -1,12 +1,18 @@
-// .envファイルからAPIキーを読み込む
-import 'dotenv/config';
+// .envファイルからAPIキーを読み込む（スクリプトと同じフォルダの.envを明示的に指定）
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import Anthropic from '@anthropic-ai/sdk';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, '.env'), override: true });
 
 // Claudeクライアントを初期化
 const client = new Anthropic();
 
 // 今回テストに使う固定の食材リスト
-const 食材リスト = '鮭、ブロッコリー、玉ねぎ、にんにく、レモン、卵、ほうれん草';
+const 食材リスト = '鮭、鯖、鱈、ブロッコリー、玉ねぎ、にんにく、レモン、卵、ほうれん草';
 
 // Claudeに渡す制約条件のシステムプロンプト
 const システムプロンプト = `
@@ -18,7 +24,7 @@ const システムプロンプト = `
 - 使える加熱機器：コンロ、魚焼きグリル、電気圧力鍋
 
 【食事方針の制約】
-- 魚をメインにする。肉は控えめにする
+- 魚全般をメインにする。鮭・鯖・鱈・鰤・鯵・鰯など複数の魚種をバランスよく使うこと。肉は控えめにする
 - 揚げ物は作らない
 - 油はオリーブオイル中心。バターは控えめ
 - 高たんぱくな料理を優先する
@@ -61,15 +67,18 @@ async function 献立を提案する() {
   // レスポンスからテキストを取り出す
   const テキスト = response.content[0].text;
 
+  // ```json ... ``` のコードブロックが付いていた場合は除去する
+  const クリーンテキスト = テキスト.replace(/^```json\s*/m, '').replace(/^```\s*$/m, '').trim();
+
   // JSONとして解析を試みる
   try {
-    const json = JSON.parse(テキスト);
+    const json = JSON.parse(クリーンテキスト);
     console.log('=== 提案された献立（JSON）===\n');
     console.log(JSON.stringify(json, null, 2));
   } catch {
     // JSONが壊れていた場合はテキストをそのまま表示する
     console.log('=== 提案された献立（テキスト）===\n');
-    console.log(テキスト);
+    console.log(クリーンテキスト);
   }
 }
 

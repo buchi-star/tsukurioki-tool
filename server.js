@@ -1,12 +1,14 @@
-// .envからAPIキーを読み込む
-import 'dotenv/config';
+// .envからAPIキーを読み込む（スクリプトと同じフォルダの.envを明示的に指定）
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import Anthropic from '@anthropic-ai/sdk';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: join(__dirname, '.env'), override: true });
 const client = new Anthropic();
 const PORT = 3000;
 
@@ -19,8 +21,12 @@ const システムプロンプト = `
 - 電子レンジは使えない
 - 使える加熱機器：コンロ、魚焼きグリル、電気圧力鍋
 
+【食材の使い方】
+- 入力された食材を必ずメインに使うこと。入力にない食材をメイン食材として勝手に追加しないこと
+- 魚（鮭・鯖・鱈・鰤・鯵・鰯など）は食材として入力された場合のみ使う。入力にない場合は魚を追加しない
+- 塩・こしょう・オリーブオイル・醤油・みりんなどの調味料・油脂は入力になくても使ってよい
+
 【食事方針の制約】
-- 魚をメインにする。肉は控えめにする
 - 揚げ物は作らない
 - 油はオリーブオイル中心。バターは控えめ
 - 高たんぱくな料理を優先する
